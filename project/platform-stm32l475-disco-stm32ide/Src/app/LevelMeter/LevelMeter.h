@@ -85,10 +85,12 @@ protected:
     float m_temperature;        // Latest processor temperature measurement.
     Evt m_inEvt;                // Static event copy of a generic incoming req to be confirmed. Added more if needed.
     MsgSeqRec m_msgSeq;         // Keeps track of sequence numbers of outgoing messages.
-    Snake snake;
+    Snake m_snake;
 
     enum {
-        REPORT_TIMEOUT_MS = 100 //333
+        REPORT_TIMEOUT_MS = 100, //333
+		REPORT_TIMEOUT_MS_X = 90,
+		REPORT_TIMEOUT_MS_XX = 80,
     };
 
     Timer m_stateTimer;

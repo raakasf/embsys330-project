@@ -17,6 +17,8 @@
 "./Src/app/GpioOutAct/GpioOut/GpioPattern.o"
 "./Src/app/GpioOutAct/GpioOutAct.o"
 "./Src/app/LevelMeter/LevelMeter.o"
+"./Src/app/LevelMeter/Point.o"
+"./Src/app/LevelMeter/Snake.o"
 "./Src/app/Node/Node.o"
 "./Src/app/Node/NodeCmd.o"
 "./Src/app/Node/NodeParser/NodeParser.o"

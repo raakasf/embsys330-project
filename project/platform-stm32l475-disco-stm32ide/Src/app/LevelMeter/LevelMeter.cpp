@@ -74,7 +74,7 @@ LevelMeter::LevelMeter() :
     Active((QStateHandler)&LevelMeter::InitialPseudoState, LEVEL_METER, "LEVEL_METER"),
     m_accelGyroPipe(m_accelGyroStor, ACCEL_GYRO_PIPE_ORDER),
     m_humidTempPipe(m_humidTempStor, HUMID_TEMP_PIPE_ORDER),
-    m_pitch(0.0), m_roll(0.0), m_pitchThres(5.0), m_rollThres(5.0),
+    m_pitch(0.0), m_roll(0.0), m_pitchThres(20.0), m_rollThres(20.0),
     m_humidity(0.0), m_temperature(0.0), m_inEvt(QEvt::STATIC_EVT), m_msgSeq(""),
     m_stateTimer(GetHsmn(), STATE_TIMER),
     m_reportTimer(GetHsmn(), REPORT_TIMER) {
@@ -249,8 +249,8 @@ QState LevelMeter::Started(LevelMeter * const me, QEvt const * const e) {
             EVENT(e);
             me->m_pitch = 0.0;
             me->m_roll = 0.0;
-            me->m_pitchThres = 5.0;
-            me->m_rollThres = 5.0;
+            me->m_pitchThres = 20.0;
+            me->m_rollThres = 20.0;
             me->m_humidity = 0.0;
             me->m_temperature = 0.0;
             me->m_reportTimer.Start(REPORT_TIMEOUT_MS, Timer::PERIODIC);
@@ -341,6 +341,8 @@ QState LevelMeter::Normal(LevelMeter * const me, QEvt const * const e) {
     switch (e->sig) {
         case Q_ENTRY_SIG: {
             EVENT(e);
+//            if(REPORT_TIMEOUT_MS != me->m_snake.GetSpeed())
+//            	me->m_reportTimer.Restart(me->m_snake.GetSpeed(), Timer::PERIODIC);
             return Q_HANDLED();
         }
         case Q_EXIT_SIG: {
@@ -366,29 +368,41 @@ QState LevelMeter::Redrawing(LevelMeter * const me, QEvt const * const e) {
 
 			Log::FloatToStr(val, sizeof(val), me->m_pitch,  6,  2);
 
-			int32_t bg_color = COLOR24_GREEN;
-			if(me->m_pitch > me->m_pitchThres) {
-				snprintf(buf, sizeof(buf), "<.%d", me->snake.GetLength());
-				bg_color = COLOR24_RED;
-			} else if(me->m_pitch < (-1 * me->m_pitchThres)) {
-				snprintf(buf, sizeof(buf), ".>%d", me->snake.GetLength());
-				bg_color = COLOR24_RED;
+			int dir = 1;
+//			if(me->m_pitch > me->m_pitchThres) {
+////				snprintf(buf, sizeof(buf), "^.%d", me->m_snake.GetLength());
+////				bg_color = COLOR24_RED;
+//				me->m_snake.SetSpeed(100 * int(me->m_pitch) % int(me->m_pitchThres));
+//			} else
+			if(me->m_pitch < (-1 * me->m_pitchThres)) {
+//				snprintf(buf, sizeof(buf), ".v%d", me->m_snake.GetLength());
+				dir = 2;
 			}
-			me->Send(new DispDrawTextReq(buf, 10, 30, COLOR24_BLUE, bg_color, 4), ILI9341);
+//			me->Send(new DispDrawTextReq(buf, 10, 30, COLOR24_BLUE, bg_color, 4), ILI9341);
 			Log::FloatToStr(val, sizeof(val), me->m_roll,  6,  2);
-			snprintf(buf, sizeof(buf), "R= %s", val);
-			bg_color = COLOR24_GREEN;
+//			bg_color = COLOR24_GREEN;
+
 			if(me->m_roll > me->m_rollThres) {
-				bg_color = COLOR24_RED;
+//				snprintf(buf, sizeof(buf), "<.%d", me->m_snake.GetLength());
+				dir = 3;
+			} else if(me->m_roll < (-1 * me->m_rollThres)) {
+//				snprintf(buf, sizeof(buf), ".>%d", me->m_snake.GetLength());
+				dir = 4;
 			}
-			me->Send(new DispDrawTextReq(buf, 10, 90, COLOR24_BLUE, bg_color, 4), ILI9341);
+			me->m_snake.Move(dir);
+			me->Send(new DispDrawCircleReq(10, 10, 4, COLOR24_BLUE), ILI9341);
+			auto points = me->m_snake.Get();
+			snprintf(buf, sizeof(buf), ".");
+			for(auto i = 0; i <  me->m_snake.GetLength(); i++) {
+				int x = points[i]->GetX();
+				int y = points[i]->GetY();
+				me->Send(new DispDrawTextReq(buf, x, y, COLOR24_BLUE, COLOR24_WHITE, 4), ILI9341);
+			}
+			auto fruit = me->m_snake.GetFruit();
+			me->Send(new DispDrawTextReq(buf, fruit.GetX(), fruit.GetY(), COLOR24_RED, COLOR24_WHITE, 4), ILI9341);
 
 			Log::FloatToStr(val, sizeof(val), me->m_pitchThres,  5,  2);
-//			snprintf(buf, sizeof(buf), "PT= %s", val);
-//			me->Send(new DispDrawTextReq(buf, 10, 150, COLOR24_BLACK, COLOR24_WHITE, 4), ILI9341);
 			Log::FloatToStr(val, sizeof(val), me->m_rollThres,  5,  2);
-//			snprintf(buf, sizeof(buf), "RT= %s", val);
-//			me->Send(new DispDrawTextReq(buf, 10, 210, COLOR24_BLACK, COLOR24_WHITE, 4), ILI9341);
 
 			me->Send(new DispDrawEndReq(), ILI9341);
 			return Q_HANDLED();

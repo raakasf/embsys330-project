@@ -5,13 +5,19 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../Src/app/LevelMeter/LevelMeter.cpp 
+../Src/app/LevelMeter/LevelMeter.cpp \
+../Src/app/LevelMeter/Point.cpp \
+../Src/app/LevelMeter/Snake.cpp 
 
 OBJS += \
-./Src/app/LevelMeter/LevelMeter.o 
+./Src/app/LevelMeter/LevelMeter.o \
+./Src/app/LevelMeter/Point.o \
+./Src/app/LevelMeter/Snake.o 
 
 CPP_DEPS += \
-./Src/app/LevelMeter/LevelMeter.d 
+./Src/app/LevelMeter/LevelMeter.d \
+./Src/app/LevelMeter/Point.d \
+./Src/app/LevelMeter/Snake.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
@@ -21,7 +27,7 @@ Src/app/LevelMeter/%.o Src/app/LevelMeter/%.su: ../Src/app/LevelMeter/%.cpp Src/
 clean: clean-Src-2f-app-2f-LevelMeter
 
 clean-Src-2f-app-2f-LevelMeter:
-	-$(RM) ./Src/app/LevelMeter/LevelMeter.d ./Src/app/LevelMeter/LevelMeter.o ./Src/app/LevelMeter/LevelMeter.su
+	-$(RM) ./Src/app/LevelMeter/LevelMeter.d ./Src/app/LevelMeter/LevelMeter.o ./Src/app/LevelMeter/LevelMeter.su ./Src/app/LevelMeter/Point.d ./Src/app/LevelMeter/Point.o ./Src/app/LevelMeter/Point.su ./Src/app/LevelMeter/Snake.d ./Src/app/LevelMeter/Snake.o ./Src/app/LevelMeter/Snake.su
 
 .PHONY: clean-Src-2f-app-2f-LevelMeter
 

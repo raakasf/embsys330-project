@@ -61,7 +61,9 @@ namespace APP {
     ADD_EVT(DISP_DRAW_END_REQ) \
     ADD_EVT(DISP_DRAW_END_CFM) \
     ADD_EVT(DISP_DRAW_TEXT_REQ) \
-    ADD_EVT(DISP_DRAW_RECT_REQ)
+    ADD_EVT(DISP_DRAW_RECT_REQ) \
+	ADD_EVT(DISP_DRAW_CIRCLE_REQ) \
+	ADD_EVT(DISP_DRAW_LINE_REQ)
 
 #undef ADD_EVT
 #define ADD_EVT(e_) e_,
@@ -203,6 +205,35 @@ private:
     uint16_t m_h;
     uint32_t m_color;         // 24-bit RGB
 };
+
+// There is no confirmation. Sequence number is always 0.
+class DispDrawCircleReq : public Evt {
+public:
+    enum {
+        TIMEOUT_MS = 100
+    };
+    DispDrawCircleReq(int16_t x0, int16_t y0, uint16_t r, uint32_t color) :
+        Evt(DISP_DRAW_CIRCLE_REQ),
+        m_x(x0), m_y(y0), m_r(r), m_color(color) {
+        DISP_INTERFACE_ASSERT(r);
+    }
+    DispDrawCircleReq(Hsmn to, Hsmn from, Sequence seq, int16_t x0, int16_t y0, uint16_t r, uint32_t color) :
+        Evt(DISP_DRAW_CIRCLE_REQ, to, from, seq),
+        m_x(x0), m_y(y0), m_r(r), m_color(color) {
+        DISP_INTERFACE_ASSERT(r);
+    }
+    int16_t GetX() const { return m_x; }
+    int16_t GetY() const { return m_y; }
+    uint16_t GetR() const { return m_r; }
+    uint32_t GetColor() const { return m_color; }
+private:
+    int16_t m_x;
+    int16_t m_y;
+    uint16_t m_r;
+    uint32_t m_color;         // 24-bit RGB
+};
+
+
 
 } // namespace APP
 
