@@ -65,7 +65,9 @@ protected:
         static QState Starting(LevelMeter * const me, QEvt const * const e);
         static QState Stopping(LevelMeter * const me, QEvt const * const e);
         static QState Started(LevelMeter * const me, QEvt const * const e);
-            static QState Normal(LevelMeter * const me, QEvt const * const e);
+            static QState Moving(LevelMeter * const me, QEvt const * const e);
+            	static QState Eating(LevelMeter * const me, QEvt const * const e);
+            	static QState Dying(LevelMeter * const me, QEvt const * const e);
             static QState Redrawing(LevelMeter * const me, QEvt const * const e);
 
     enum {
@@ -86,6 +88,8 @@ protected:
     Evt m_inEvt;                // Static event copy of a generic incoming req to be confirmed. Added more if needed.
     MsgSeqRec m_msgSeq;         // Keeps track of sequence numbers of outgoing messages.
     Snake m_snake;
+    bool m_isDead;
+    bool m_hasGotFruit;
 
     enum {
         REPORT_TIMEOUT_MS = 100, //333

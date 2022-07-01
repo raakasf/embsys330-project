@@ -29,13 +29,6 @@ void Snake::AddCell(int x, int y) {
 	cell[size++] = new Point(x, y);
 }
 
-//void Snake::WelcomeScreen() {
-//		SH1106GotoXY(4, 0) ;
-//		SH1106_Puts((char*)"| SNAKE GAME |", &Font_5x7, SH1106_COLOR_WHITE) ;
-//		SH1106GotoXY(4, 1) ;
-//		SH1106_Puts((char*)"-------------", &Font_5x7, SH1106_COLOR_WHITE) ;
-//		SH1106_UpdateScreen(); //display
-//	}
 
 int Snake::Move(int dir) {
 	this->dir = dir;
@@ -60,18 +53,28 @@ int Snake::Move(int dir) {
 
 	if (SelfCollision()) return -1;
 
+	return 0;
+}
+
+bool Snake::TryEating() {
 	if (((fruit.GetX() >= cell[0]->GetX() - 10) && (fruit.GetX() <= cell[0]->GetX() + 10)) &&
 			((fruit.GetY() >= cell[0]->GetY() - 20) && (fruit.GetY() <= cell[0]->GetY() + 20))) {
 		AddCell(0, 0);
 		fruit.SetPoint(rand() % MAX_FRAME_X, rand() % MAX_FRAME_Y);
+		return true;
 	}
+	return false;
+}
 
-	return 0;
+bool Snake::IsDead() {
+	return SelfCollision();
 }
 
 bool Snake::SelfCollision() {
 	for (int i = 1; i < size; i++)
-		if (cell[0]->IsEqual(cell[i])) return true;
+		if (cell[0]->IsEqual(cell[i])) {
+			return true;
+		}
 	return false;
 
 }

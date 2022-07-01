@@ -22,7 +22,11 @@ public:
 
 	int Move(int dir);
 
+	bool IsDead();
+
 	bool SelfCollision();
+
+	bool TryEating();
 
 	void Debug();
 

@@ -60,6 +60,9 @@ namespace APP {
     ADD_EVT(LEVEL_METER_CONTROL_REQ) \
     ADD_EVT(LEVEL_METER_CONTROL_CFM) \
     ADD_EVT(LEVEL_METER_DATA_IND) \
+    ADD_EVT(SNAKE_MOVING_REQ) \
+    ADD_EVT(SNAKE_EATING_REQ) \
+    ADD_EVT(SNAKE_DYING_REQ) \
     ADD_EVT(LEVEL_METER_DATA_RSP)
 
 #undef ADD_EVT
@@ -96,6 +99,34 @@ public:
     };
     LevelMeterStopReq() :
         Evt(LEVEL_METER_STOP_REQ) {}
+};
+
+class SnakeMovingReq : public Evt {
+public:
+    enum {
+        TIMEOUT_MS = 400
+    };
+    SnakeMovingReq() :
+        Evt(SNAKE_MOVING_REQ) {}
+};
+
+
+class SnakeEatingReq : public Evt {
+public:
+    enum {
+        TIMEOUT_MS = 400
+    };
+    SnakeEatingReq() :
+        Evt(SNAKE_EATING_REQ) {}
+};
+
+class SnakeDyingReq : public Evt {
+public:
+    enum {
+        TIMEOUT_MS = 400
+    };
+    SnakeDyingReq() :
+        Evt(SNAKE_DYING_REQ) {}
 };
 
 class LevelMeterStopCfm : public ErrorEvt {

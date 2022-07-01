@@ -76,6 +76,7 @@ LevelMeter::LevelMeter() :
     m_humidTempPipe(m_humidTempStor, HUMID_TEMP_PIPE_ORDER),
     m_pitch(0.0), m_roll(0.0), m_pitchThres(20.0), m_rollThres(20.0),
     m_humidity(0.0), m_temperature(0.0), m_inEvt(QEvt::STATIC_EVT), m_msgSeq(""),
+	m_isDead(false), m_hasGotFruit(false),
     m_stateTimer(GetHsmn(), STATE_TIMER),
     m_reportTimer(GetHsmn(), REPORT_TIMER) {
     SET_EVT_NAME(LEVEL_METER);
@@ -262,7 +263,7 @@ QState LevelMeter::Started(LevelMeter * const me, QEvt const * const e) {
             return Q_HANDLED();
         }
         case Q_INIT_SIG: {
-            return Q_TRAN(&LevelMeter::Normal);
+            return Q_TRAN(&LevelMeter::Moving);
         }
         case REPORT_TIMER: {
             EVENT(e);
@@ -283,7 +284,7 @@ QState LevelMeter::Started(LevelMeter * const me, QEvt const * const e) {
                 me->m_avgReport.m_aY /= count;
                 me->m_avgReport.m_aZ /= count;
             }
-            LOG("(count=%d) %d, %d, %d", count, me->m_avgReport.m_aX, me->m_avgReport.m_aY, me->m_avgReport.m_aZ);
+//            LOG("(count=%d) %d, %d, %d", count, me->m_avgReport.m_aX, me->m_avgReport.m_aY, me->m_avgReport.m_aZ);
 
             const float PI = 3.14159265;
             float x = me->m_avgReport.m_aX;
@@ -303,7 +304,7 @@ QState LevelMeter::Started(LevelMeter * const me, QEvt const * const e) {
             char val2[10];
             Log::FloatToStr(val1, sizeof(val1), me->m_pitch,  6,  2);
             Log::FloatToStr(val2, sizeof(val2), me->m_roll,  6,  2);
-            LOG("pitch=%s, roll=%s", val1, val2);
+//            LOG("pitch=%s, roll=%s", val1, val2);
             // Avoids (v)snprintf with %f since GCC 10 causes memory leak.
             // This is kept as comment for reference.
             //LOG("pitch=%6.2f, roll=%6.2f", me->m_pitch, me->m_roll);
@@ -337,16 +338,80 @@ QState LevelMeter::Started(LevelMeter * const me, QEvt const * const e) {
     return Q_SUPER(&LevelMeter::Root);
 }
 
-QState LevelMeter::Normal(LevelMeter * const me, QEvt const * const e) {
+QState LevelMeter::Moving(LevelMeter * const me, QEvt const * const e) {
     switch (e->sig) {
         case Q_ENTRY_SIG: {
             EVENT(e);
-//            if(REPORT_TIMEOUT_MS != me->m_snake.GetSpeed())
-//            	me->m_reportTimer.Restart(me->m_snake.GetSpeed(), Timer::PERIODIC);
+			char val[10];
+			char buf[30];
+
+			me->Send(new DispDrawBeginReq(), ILI9341);
+            if(me->m_isDead) {
+            	snprintf(buf, sizeof(buf), "YOUR GAME IS OVER");
+				me->Send(new DispDrawTextReq(buf, 50, 50, COLOR24_RED, COLOR24_WHITE, 4), ILI9341);
+				me->Send(new DispDrawEndReq(), ILI9341);
+            	return Q_TRAN(&LevelMeter::Stopped);
+            }
+
+			int dir = 1;
+			if(me->m_pitch < (-1 * me->m_pitchThres)) {
+				dir = 2;
+			}
+
+			if(me->m_roll > me->m_rollThres) {
+				dir = 3;
+			} else if(me->m_roll < (-1 * me->m_rollThres)) {
+				dir = 4;
+			}
+			me->m_snake.Move(dir);
+
+			Log::FloatToStr(val, sizeof(val), me->m_pitch,  6,  2);
+//			me->Send(new DispDrawCircleReq(10, 10, 4, COLOR24_BLUE), ILI9341);
+			auto points = me->m_snake.Get();
+			snprintf(buf, sizeof(buf), ".");
+			for(auto i = 0; i <  me->m_snake.GetLength(); i++) {
+				int x = points[i]->GetX();
+				int y = points[i]->GetY();
+				me->Send(new DispDrawTextReq(buf, x, y, COLOR24_BLUE, COLOR24_WHITE, 4), ILI9341);
+			}
+			me->Send(new DispDrawEndReq(), ILI9341);
+
+			me->Send(new SnakeEatingReq(), me->GetHsmn());
             return Q_HANDLED();
+        }
+        case SNAKE_EATING_REQ: {
+            EVENT(e);
+            return Q_TRAN(&LevelMeter::Eating);
         }
         case Q_EXIT_SIG: {
             EVENT(e);
+            return Q_TRAN(&LevelMeter::Stopped);
+        }
+        case REDRAW: {
+            EVENT(e);
+            return Q_TRAN(&LevelMeter::Redrawing);
+        }
+    }
+    return Q_SUPER(&LevelMeter::Started);
+}
+
+QState LevelMeter::Eating(LevelMeter * const me, QEvt const * const e) {
+    switch (e->sig) {
+        case Q_ENTRY_SIG: {
+        	if(me->m_snake.TryEating()) {
+        		me->m_hasGotFruit = true;
+        	}
+            EVENT(e);
+            me->Send(new SnakeDyingReq(), me->GetHsmn());
+            return Q_HANDLED();
+        }
+        case SNAKE_DYING_REQ: {
+            EVENT(e);
+            return Q_TRAN(&LevelMeter::Dying);
+        }
+        case Q_EXIT_SIG: {
+            EVENT(e);
+            me->Send(new SnakeDyingReq(), me->GetHsmn());
             return Q_HANDLED();
         }
         case REDRAW: {
@@ -357,47 +422,40 @@ QState LevelMeter::Normal(LevelMeter * const me, QEvt const * const e) {
     return Q_SUPER(&LevelMeter::Started);
 }
 
+QState LevelMeter::Dying(LevelMeter * const me, QEvt const * const e) {
+    switch (e->sig) {
+        case Q_ENTRY_SIG: {
+            EVENT(e);
+            if(me->m_snake.SelfCollision()) {
+            	me->m_isDead = true;
+            	return Q_SUPER(&LevelMeter::Stopped);
+            }
+            return Q_HANDLED();
+        }
+        case Q_EXIT_SIG: {
+            EVENT(e);
+            if(me->m_isDead) {
+				LOG("YOUR SNAKE IS DEADBEEF");
+            	return Q_SUPER(&LevelMeter::Stopped);
+            }
+            return Q_HANDLED();
+        }
+        case REDRAW: {
+            EVENT(e);
+            return Q_TRAN(&LevelMeter::Redrawing);
+        }
+    }
+    return Q_SUPER(&LevelMeter::Started);
+}
 
 QState LevelMeter::Redrawing(LevelMeter * const me, QEvt const * const e) {
     switch (e->sig) {
 		case Q_ENTRY_SIG: {
 			EVENT(e);
-			me->Send(new DispDrawBeginReq(), ILI9341);
 			char val[10];
 			char buf[30];
 
-			Log::FloatToStr(val, sizeof(val), me->m_pitch,  6,  2);
-
-			int dir = 1;
-//			if(me->m_pitch > me->m_pitchThres) {
-////				snprintf(buf, sizeof(buf), "^.%d", me->m_snake.GetLength());
-////				bg_color = COLOR24_RED;
-//				me->m_snake.SetSpeed(100 * int(me->m_pitch) % int(me->m_pitchThres));
-//			} else
-			if(me->m_pitch < (-1 * me->m_pitchThres)) {
-//				snprintf(buf, sizeof(buf), ".v%d", me->m_snake.GetLength());
-				dir = 2;
-			}
-//			me->Send(new DispDrawTextReq(buf, 10, 30, COLOR24_BLUE, bg_color, 4), ILI9341);
-			Log::FloatToStr(val, sizeof(val), me->m_roll,  6,  2);
-//			bg_color = COLOR24_GREEN;
-
-			if(me->m_roll > me->m_rollThres) {
-//				snprintf(buf, sizeof(buf), "<.%d", me->m_snake.GetLength());
-				dir = 3;
-			} else if(me->m_roll < (-1 * me->m_rollThres)) {
-//				snprintf(buf, sizeof(buf), ".>%d", me->m_snake.GetLength());
-				dir = 4;
-			}
-			me->m_snake.Move(dir);
-			me->Send(new DispDrawCircleReq(10, 10, 4, COLOR24_BLUE), ILI9341);
-			auto points = me->m_snake.Get();
 			snprintf(buf, sizeof(buf), ".");
-			for(auto i = 0; i <  me->m_snake.GetLength(); i++) {
-				int x = points[i]->GetX();
-				int y = points[i]->GetY();
-				me->Send(new DispDrawTextReq(buf, x, y, COLOR24_BLUE, COLOR24_WHITE, 4), ILI9341);
-			}
 			auto fruit = me->m_snake.GetFruit();
 			me->Send(new DispDrawTextReq(buf, fruit.GetX(), fruit.GetY(), COLOR24_RED, COLOR24_WHITE, 4), ILI9341);
 
@@ -413,7 +471,7 @@ QState LevelMeter::Redrawing(LevelMeter * const me, QEvt const * const e) {
         }
         case DISP_DRAW_END_CFM: {
             EVENT(e);
-            return Q_TRAN(&LevelMeter::Normal);
+            return Q_TRAN(&LevelMeter::Moving);
         }
         case REDRAW: {
             EVENT(e);
