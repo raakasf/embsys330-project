@@ -346,10 +346,12 @@ QState LevelMeter::Moving(LevelMeter * const me, QEvt const * const e) {
 			char buf[30];
 
 			me->Send(new DispDrawBeginReq(), ILI9341);
-            if(me->m_isDead) {
-            	snprintf(buf, sizeof(buf), "YOUR GAME IS OVER");
-				me->Send(new DispDrawTextReq(buf, 50, 50, COLOR24_RED, COLOR24_WHITE, 4), ILI9341);
-				me->Send(new DispDrawEndReq(), ILI9341);
+//			me->Send(new DispDrawRectReq(0, 0, MAX_FRAME_X, MAX_FRAME_Y, COLOR24_WHITE), ILI9341);
+
+			if(me->m_isDead) {
+//            	snprintf(buf, sizeof(buf), "GAME\n\nOVER");
+//				me->Send(new DispDrawTextReq(buf, 50, 50, COLOR24_RED, COLOR24_WHITE, 4), ILI9341);
+//				me->Send(new DispDrawEndReq(), ILI9341);
             	return Q_TRAN(&LevelMeter::Stopped);
             }
 
@@ -366,14 +368,18 @@ QState LevelMeter::Moving(LevelMeter * const me, QEvt const * const e) {
 			me->m_snake.Move(dir);
 
 			Log::FloatToStr(val, sizeof(val), me->m_pitch,  6,  2);
-//			me->Send(new DispDrawCircleReq(10, 10, 4, COLOR24_BLUE), ILI9341);
 			auto points = me->m_snake.Get();
+
 			snprintf(buf, sizeof(buf), ".");
 			for(auto i = 0; i <  me->m_snake.GetLength(); i++) {
 				int x = points[i]->GetX();
 				int y = points[i]->GetY();
-				me->Send(new DispDrawTextReq(buf, x, y, COLOR24_BLUE, COLOR24_WHITE, 4), ILI9341);
+				me->Send(new DispDrawTextReq(buf, x, y, COLOR24_BLACK, COLOR24_WHITE, 4), ILI9341);
 			}
+            char score[20];
+            sprintf(score, "SCORE: %d", me->m_snake.GetLength());
+            me->Send(new DispDrawTextReq(score, MAX_FRAME_X - 100, MAX_FRAME_Y - 5, COLOR24_BLUE, COLOR24_WHITE, 2), ILI9341);
+
 			me->Send(new DispDrawEndReq(), ILI9341);
 
 			me->Send(new SnakeEatingReq(), me->GetHsmn());
@@ -424,14 +430,21 @@ QState LevelMeter::Eating(LevelMeter * const me, QEvt const * const e) {
 
 QState LevelMeter::Dying(LevelMeter * const me, QEvt const * const e) {
     switch (e->sig) {
-        case Q_ENTRY_SIG: {
-            EVENT(e);
-            if(me->m_snake.SelfCollision()) {
-            	me->m_isDead = true;
-            	return Q_SUPER(&LevelMeter::Stopped);
-            }
-            return Q_HANDLED();
-        }
+		case Q_ENTRY_SIG: {
+			EVENT(e);
+			if(me->m_snake.SelfCollision()) {
+				me->m_isDead = true;
+				char buf[30];
+				me->Send(new DispDrawBeginReq(), ILI9341);
+				snprintf(buf, sizeof(buf), "GAME");
+				me->Send(new DispDrawTextReq(buf, 100, 100, COLOR24_RED, COLOR24_WHITE, 4), ILI9341);
+				snprintf(buf, sizeof(buf), "OVER");
+				me->Send(new DispDrawTextReq(buf, 100, 200, COLOR24_RED, COLOR24_WHITE, 4), ILI9341);
+				me->Send(new DispDrawEndReq(), ILI9341);
+				return Q_TRAN(&LevelMeter::Stopped);
+			}
+			return Q_HANDLED();
+		}
         case Q_EXIT_SIG: {
             EVENT(e);
             if(me->m_isDead) {
@@ -455,8 +468,11 @@ QState LevelMeter::Redrawing(LevelMeter * const me, QEvt const * const e) {
 			char val[10];
 			char buf[30];
 
-			snprintf(buf, sizeof(buf), ".");
+			me->Send(new DispDrawBeginReq(), ILI9341);
+
+			snprintf(buf, sizeof(buf), "o");
 			auto fruit = me->m_snake.GetFruit();
+
 			me->Send(new DispDrawTextReq(buf, fruit.GetX(), fruit.GetY(), COLOR24_RED, COLOR24_WHITE, 4), ILI9341);
 
 			Log::FloatToStr(val, sizeof(val), me->m_pitchThres,  5,  2);
