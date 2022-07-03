@@ -43,7 +43,6 @@ Src/app/GpioInAct/GpioIn \
 Src/app/GpioInAct \
 Src/app/GpioOutAct/GpioOut \
 Src/app/GpioOutAct \
-Src/app/LevelMeter \
 Src/app/Node \
 Src/app/Node/NodeParser \
 Src/app/Passive \
@@ -52,6 +51,7 @@ Src/app/Sensor/SensorAccelGyro \
 Src/app/Sensor/SensorHumidTemp \
 Src/app/Sensor/SensorMag \
 Src/app/Sensor/SensorPress \
+Src/app/SnakeGame \
 Src/app/System \
 Src/app/Template/CompositeAct \
 Src/app/Template/CompositeAct/CompositeReg \

@@ -94,11 +94,12 @@
 #include "GpioOutAct.h"
 #include "AOWashingMachine.h"
 #include "Traffic.h"
-#include "LevelMeter.h"
 #include "UartAct.h"
 #include "SystemInterface.h"
 #include "ConsoleInterface.h"
 #include "ConsoleCmd.h"
+
+#include "app/SnakeGame/SnakeGame.h"
 
 FW_DEFINE_THIS_FILE("main.cpp")
 
@@ -161,7 +162,7 @@ int main(void)
     Log::Off(SENSOR_ACCEL_GYRO);
     Log::Off(SENSOR_HUMID_TEMP);
     Log::Off(ACCEL_GYRO_INT);
-    Log::Off(LEVEL_METER);
+//    Log::Off(SNAKE_GAME);
     Log::Off(WIFI);
     Log::Off(NODE_PARSER);
 

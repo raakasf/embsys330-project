@@ -39,7 +39,6 @@
 #include "app_hsmn.h"
 #include "fw_log.h"
 #include "fw_assert.h"
-#include "LevelMeterInterface.h"
 #include "NodeMsgInterface.h"
 #include "SrvMsgInterface.h"
 #include "SensorMsgInterface.h"
@@ -47,6 +46,8 @@
 #include "NodeInterface.h"
 #include "NodeParserInterface.h"
 #include "Node.h"
+
+#include "../SnakeGame/SnakeGameInterface.h"
 
 FW_DEFINE_THIS_FILE("Node.cpp")
 

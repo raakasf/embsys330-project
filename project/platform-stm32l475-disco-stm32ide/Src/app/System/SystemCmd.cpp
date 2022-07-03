@@ -43,8 +43,8 @@
 #include "Console.h"
 #include "SystemCmd.h"
 #include "SystemInterface.h"
-#include "LevelMeterInterface.h"
 #include "DispInterface.h"
+#include "../SnakeGame/SnakeGameInterface.h"
 
 FW_DEFINE_THIS_FILE("SystemCmd.cpp")
 

@@ -38,6 +38,7 @@ RM := rm -rf
 -include Src/app/Template/CompositeAct/CompositeReg/subdir.mk
 -include Src/app/Template/CompositeAct/subdir.mk
 -include Src/app/System/subdir.mk
+-include Src/app/SnakeGame/subdir.mk
 -include Src/app/Sensor/SensorPress/subdir.mk
 -include Src/app/Sensor/SensorMag/subdir.mk
 -include Src/app/Sensor/SensorHumidTemp/subdir.mk
@@ -46,7 +47,6 @@ RM := rm -rf
 -include Src/app/Passive/subdir.mk
 -include Src/app/Node/NodeParser/subdir.mk
 -include Src/app/Node/subdir.mk
--include Src/app/LevelMeter/subdir.mk
 -include Src/app/GpioOutAct/GpioOut/subdir.mk
 -include Src/app/GpioOutAct/subdir.mk
 -include Src/app/GpioInAct/GpioIn/subdir.mk

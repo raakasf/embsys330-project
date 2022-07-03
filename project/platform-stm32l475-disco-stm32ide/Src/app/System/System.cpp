@@ -49,12 +49,12 @@
 #include "GpioOutInterface.h"
 #include "AOWashingMachineInterface.h"
 #include "TrafficInterface.h"
-#include "LevelMeterInterface.h"
 #include "NodeInterface.h"
 #include "SensorInterface.h"
 #include "bsp.h"
 #include <vector>
 #include <memory>
+#include "../SnakeGame/SnakeGameInterface.h"
 
 // Compile options to enable demo application.
 //#define ENABLE_NODE
